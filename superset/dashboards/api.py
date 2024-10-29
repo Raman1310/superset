@@ -1156,20 +1156,68 @@ class DashboardRestApi(BaseSupersetModelRestApi):
         action=lambda self, *args, **kwargs: f"{self.__class__.__name__}.screenshot",
         log_to_statsd=False,
     )
-    def export_pdf(self, **kwargs: Any) -> Response:
-      # Step 1: Generate the HTML for the dashboard
-      dashboard_html = self.get_dashboard_html()  # Implement this function to return HTML
+    def screenshot(self, pk: int, digest: str) -> WerkzeugResponse:
+        """Get a computed dashboard screenshot from cache.
+        ---
+        get:
+          summary: Get a computed screenshot from cache
+          parameters:
+          - in: path
+            schema:
+              type: integer
+            name: pk
+          - in: path
+            schema:
+              type: string
+            name: digest
+          responses:
+            200:
+              description: Dashboard thumbnail image
+              content:
+               image/*:
+                 schema:
+                   type: string
+                   format: binary
+            400:
+              $ref: '#/components/responses/400'
+            401:
+              $ref: '#/components/responses/401'
+            404:
+              $ref: '#/components/responses/404'
+            500:
+              $ref: '#/components/responses/500'
+        """
+        dashboard = self.datamodel.get(pk, self._base_filters)
 
-      # Step 2: Convert HTML to PDF using WeasyPrint
-      pdf_data = HTML(string=dashboard_html).write_pdf()
+        # Making sure the dashboard still exists
+        if not dashboard:
+            return self.response_404()
 
-      # Step 3: Return the PDF as a downloadable response
-      return Response(
-          pdf_data,
-          mimetype="application/pdf",
-          headers={"Content-Disposition": "attachment; filename=dashboard.pdf"}
-      )
-    
+        download_format = request.args.get("download_format", "png")
+
+        # fetch the dashboard screenshot using the current user and cache if set
+
+        if img := DashboardScreenshot.get_from_cache_key(thumbnail_cache, digest):
+            if download_format == "pdf":
+                pdf_img = img.getvalue()
+                # Convert the screenshot to PDF
+                pdf_data = build_pdf_from_screenshots([pdf_img])
+
+                return Response(
+                    pdf_data,
+                    mimetype="application/pdf",
+                    headers={"Content-Disposition": "inline; filename=dashboard.pdf"},
+                    direct_passthrough=True,
+                )
+            if download_format == "png":
+                return Response(
+                    FileWrapper(img),
+                    mimetype="image/png",
+                    direct_passthrough=True,
+                )
+
+        return self.response_404()
+
     @expose("/favorite_status/", methods=("GET",))
     @protect()
     @safe
