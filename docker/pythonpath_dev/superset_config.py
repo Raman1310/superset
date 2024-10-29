@@ -117,3 +117,18 @@ try:
     )
 except ImportError:
     logger.info("Using default Docker config...")
+    
+ENABLE_JAVASCRIPT = True
+
+# Celery configuration
+CELERY_CONFIG = {
+    'broker_url': f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CELERY_DB}",  # Replace with your Redis broker URL
+    'result_backend': f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_RESULTS_DB}",
+    'task_track_started': True,
+}
+
+# # Optional: Specify screenshot directory
+# SCREENSHOT_DIR = '/path/to/screenshot/dir'
+
+# Set timeout for long-running tasks
+SUPERSET_WEBSERVER_TIMEOUT = 120  # in seconds
