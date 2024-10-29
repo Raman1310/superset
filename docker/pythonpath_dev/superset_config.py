@@ -97,7 +97,13 @@ class CeleryConfig:
 
 CELERY_CONFIG = CeleryConfig
 
-FEATURE_FLAGS = {"ALERT_REPORTS": True}
+FEATURE_FLAGS = {
+    "ALERT_REPORTS": True,        # Enables the alerts and reporting feature
+    "THUMBNAILS": True,   
+    "DASHBOARD_RBAC": True,
+    "SCHEDULED_REPORTS": True, 
+    "ALERT_REPORTS_WORKERS": 1
+}
 ALERT_REPORTS_NOTIFICATION_DRY_RUN = True
 WEBDRIVER_BASEURL = "http://superset:8088/"  # When using docker compose baseurl should be http://superset_app:8088/
 # The base URL for the email report hyperlinks.
@@ -132,3 +138,5 @@ CELERY_CONFIG = {
 
 # Set timeout for long-running tasks
 SUPERSET_WEBSERVER_TIMEOUT = 120  # in seconds
+
+
